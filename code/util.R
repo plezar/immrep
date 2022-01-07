@@ -19,7 +19,7 @@ library(tidyr)
 library(ggplot2)
 
 library(devtools)
-install_github("fabio-t/mixed.utils")
+#install_github("fabio-t/mixed.utils", force = TRUE)
 library(mixed.utils)
 
 heatmaps <- function(regexp, prefix = NULL, invert = F, cex = 0.9, tsne = F) {
@@ -138,9 +138,9 @@ immload <- function(which="full", downsample=F) {
   return(immdata)
 }
 
-clones2groups <- function(immdata = NULL, overwrite = F, savefasta = F, dirname="fasta", join_by=NULL, collapse=F, downsample=F) {
-  if (is.null(immdata)) {
-    immdata <- immload(downsample=downsample)
+clones2groups <- function(immdata = NULL, overwrite = F, savefasta = F, dirname="fasta", join_by=NULL, pool_samples=F, downsample=F, save_clustered=F) {
+  if (is.character(immdata)) {
+    immdata <- readRDS(immdata)
   }
 
   library(dplyr)
@@ -167,13 +167,16 @@ clones2groups <- function(immdata = NULL, overwrite = F, savefasta = F, dirname=
         mutate(id=str_c(cur_group_id(), cloneclust(CDR3.aa, 0.15), sep=".")) %>%
         group_by(id, .add=T)
   print(all_d2, width=Inf)
-  if (collapse) {
+  if (pool_samples) {
     all_d3 <- all_d2 %>% ungroup() %>% group_split(JoinBy, .keep=F)
     names(all_d3) <- levels(all_d$JoinBy)
   } else {
     all_d3 <- all_d2 %>% ungroup() %>% select(-JoinBy) %>% group_split(Sample, .keep=T)
     names(all_d3) <- names(immdata$data)
   }
+  immdata$data <- as.list(all_d3)
+
+  if (save_clustered) saveRDS(immdata, paste0(make_path(dirname), "clustered_immdata.rds"))
 
   for (name in names(all_d3)) {
     d <- all_d3[[name]]
@@ -238,38 +241,40 @@ clones2groups <- function(immdata = NULL, overwrite = F, savefasta = F, dirname=
     # FIXME D.name, as well as V.end/J.start/D.start/D.end, will not necessarily
     # match when V, J, CDR3length and CDR3@85% end up grouped together
     d3 <- d2 %>%
-          summarise(cloneId=str_c(unique(id)), cloneSize=n(),
-                    cloneCount=sum(Clones), cloneFraction=sum(Proportion),
-                    nSeqCDR3=consensus_nt(CDR3.nt),
-                    # CDR3.aa=consensus_aa(CDR3.aa),
-                    aaSeqCDR3=transl_nt2aa(nSeqCDR3),
+      dplyr::summarise(
+        Clone.id = str_c(unique(id)),
+        Clones = sum(Clones),
+        Clonotypes = n(),
+        Proportion = sum(Proportion),
+        CDR3.nt = consensus_nt(CDR3.nt),
+        CDR3.aa = transl_nt2aa(CDR3.nt),
+        D.name=str_c(unique(D.name), collapse=","),
+        C.name=str_c(unique(C.name), collapse=","),
+        #V.end=str_c(unique(V.end), collapse=","),
+        #D.start=str_c(unique(D.start), collapse=","),
+        #D.end=str_c(unique(D.end), collapse=","),
+        #J.start=str_c(unique(J.start), collapse=","),
+        #VJ.ins=str_c(unique(VJ.ins), collapse=","),
+        #VD.ins=str_c(unique(VD.ins), collapse=","),
+        #DJ.ins=str_c(unique(DJ.ins), collapse=","),
+        Sequence=str_c(unique(Sequence), collapse=","),
+        Samples=str_c(unique(Sample), collapse=","),
 
-                    # some extra stuff to caracterise the lineages
-                    # expsha=exp(diversity(Clones, index="shannon")),
-                    cloneDiversity=diversity(Clones, index="invsim"),
-                    # shan_even=diversity(Clones, index="shannon")/log(n()),
-                    # shan_even2=exp(diversity(Clones, index="shannon"))/n(),
-                    cloneEvenness=diversity(Clones, index="invsim")/n(),
-
-                    # stuff for immunarch
-                    D.name=str_c(unique(D.name), collapse=","),
-                    V.end=str_c(unique(V.end), collapse=","),
-                    D.start=str_c(unique(D.start), collapse=","),
-                    D.end=str_c(unique(D.end), collapse=","),
-                    J.start=str_c(unique(J.start), collapse=","),
-                    VJ.ins=str_c(unique(VJ.ins), collapse=","),
-                    VD.ins=str_c(unique(VD.ins), collapse=","),
-                    DJ.ins=str_c(unique(DJ.ins), collapse=","),
-                    Sequence=str_c(unique(Sequence), collapse=","),
-                    Samples=str_c(unique(Sample), collapse=",")
-                    ) %>%
+        # some extra stuff to caracterise the lineages
+        # expsha=exp(diversity(Clones, index="shannon")),
+        cloneDiversity=diversity(Clones, index="invsim"),
+        # shan_even=diversity(Clones, index="shannon")/log(n()),
+        # shan_even2=exp(diversity(Clones, index="shannon"))/n(),
+        cloneEvenness=diversity(Clones, index="invsim")/n()
+      ) %>%
           # slice_head() %>%
           # ungroup() %>%
-          arrange(desc(cloneCount))
+          arrange(desc(Clones)) %>%
+      ungroup()
 
     print(d3, width=Inf)
 
-    immdata$data[[name]] = d3
+    immdata$data[[name]] <- d3
   }
 
   if (overwrite) {
