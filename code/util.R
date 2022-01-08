@@ -138,7 +138,7 @@ immload <- function(which="full", downsample=F) {
   return(immdata)
 }
 
-clones2groups <- function(immdata = NULL, overwrite = F, savefasta = F, dirname="fasta", join_by=NULL, pool_samples=F, downsample=F, save_clustered=F) {
+clones2groups <- function(immdata = NULL, overwrite = F, savefasta = F, dirname="fasta", join_by=NULL, pool_samples=F, downsample=F, save_clustered=F, save_collapsed=F) {
   if (is.character(immdata)) {
     immdata <- readRDS(immdata)
   }
@@ -307,7 +307,7 @@ clones2groups <- function(immdata = NULL, overwrite = F, savefasta = F, dirname=
       # write.table(d, file=paste0("full/", name, ".csv"), quote=F, row.names=F, sep="\t")
     }
   }
-
+  if (save_collapsed) saveRDS(immdata, paste0(make_path(dirname), "collapsed_immdata.rds"))
   return(immdata)
 }
 

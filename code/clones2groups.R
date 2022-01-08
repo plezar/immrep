@@ -32,7 +32,8 @@ clones2groups(immdata=opt$input,
       savefasta=F,
       dirname="output",
       downsample=downsample,
-      save_clustered=T)
+      save_clustered=T,
+      save_collapsed=T)
 
 if (!is.null(opt$'group-by')) {
   clones2groups(immdata=opt$input,
@@ -42,5 +43,6 @@ if (!is.null(opt$'group-by')) {
         join_by=opt$'group-by',
         pool_samples=T,
         downsample=downsample,
-        save_clustered=T)
+        save_clustered=T,
+      save_collapsed=T)
 }
