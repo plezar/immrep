@@ -10,7 +10,7 @@ option_list = list(
   make_option(c("-g", "--group-by"), type="character", default=NULL,
               help="if set, in addition to the normal midX_clones.csv it will also pool together samples according to the specified variable (eg, mouse)"),
   make_option(c("-p", "--pool-samples"), type="character", default=F,
-              help="if true, all samples will be pooled")
+              help="if True, all samples will be pooled")
 )
 
 opt_parser = OptionParser(option_list=option_list)
@@ -29,12 +29,18 @@ if (is.null(opt$downsample)) {
   downsample = as.integer(opt$downsample)
 }
 
+if (opt$'pool-samples' == "True") {
+  pool_samples = T
+} else {
+  pool_samples = F
+}
+
 clones2groups(immdata=opt$input,
   overwrite=F,
   savefasta=F,
   dirname="output",
   downsample=downsample,
-  pool_samples=opt$'pool-samples',
+  pool_samples=pool_samples,
   save_clustered=T,
   save_collapsed=T)
 
