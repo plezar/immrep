@@ -166,7 +166,7 @@ clones2groups <- function(immdata = NULL, overwrite = F, savefasta = F, dirname=
         group_by(V.name, J.name, len, JoinBy) %>%
         mutate(id=str_c(cur_group_id(), cloneclust(CDR3.aa, 0.15), sep=".")) %>%
         group_by(id, .add=T)
-  print(all_d2, width=Inf)
+
   if (pool_samples) {
     all_d3 <- all_d2 %>% ungroup() %>% group_split(JoinBy, .keep=F)
     names(all_d3) <- levels(all_d$JoinBy)
@@ -183,7 +183,6 @@ clones2groups <- function(immdata = NULL, overwrite = F, savefasta = F, dirname=
 
     d2 <- d %>%
           group_by(V.name, J.name, len, id)
-    print(d2)
 
     if (savefasta) {
       d3 <- d2 # keep in case everything below's commented out
@@ -272,8 +271,6 @@ clones2groups <- function(immdata = NULL, overwrite = F, savefasta = F, dirname=
           arrange(desc(Clones)) %>%
       ungroup()
 
-    print(d3, width=Inf)
-
     immdata$data[[name]] <- d3
   }
 
@@ -307,6 +304,7 @@ clones2groups <- function(immdata = NULL, overwrite = F, savefasta = F, dirname=
       # write.table(d, file=paste0("full/", name, ".csv"), quote=F, row.names=F, sep="\t")
     }
   }
+  print("SAVING COLLPASED IMMDATA ...")
   if (save_collapsed) saveRDS(immdata, paste0(make_path(dirname), "collapsed_immdata.rds"))
   return(immdata)
 }

@@ -8,7 +8,9 @@ option_list = list(
   make_option(c("-d", "--downsample"), type="character", default=NULL,
               help="whether to downsample to a fixed number of cells. Can either be a number or just True"),
   make_option(c("-g", "--group-by"), type="character", default=NULL,
-              help="if set, in addition to the normal midX_clones.csv it will also pool together samples according to the specified variable (eg, mouse)")
+              help="if set, in addition to the normal midX_clones.csv it will also pool together samples according to the specified variable (eg, mouse)"),
+  make_option(c("-p", "--pool-samples"), type="character", default=F,
+              help="if true, all samples will be pooled")
 )
 
 opt_parser = OptionParser(option_list=option_list)
@@ -28,21 +30,22 @@ if (is.null(opt$downsample)) {
 }
 
 clones2groups(immdata=opt$input,
-      overwrite=F,
-      savefasta=F,
-      dirname="output",
-      downsample=downsample,
-      save_clustered=T,
-      save_collapsed=T)
+  overwrite=F,
+  savefasta=F,
+  dirname="output",
+  downsample=downsample,
+  pool_samples=opt$'pool-samples',
+  save_clustered=T,
+  save_collapsed=T)
 
 if (!is.null(opt$'group-by')) {
   clones2groups(immdata=opt$input,
-        overwrite=F,
-        savefasta=F,
-        dirname="output_groups",
-        join_by=opt$'group-by',
-        pool_samples=T,
-        downsample=downsample,
-        save_clustered=T,
-      save_collapsed=T)
+    overwrite=F,
+    savefasta=F,
+    dirname="output_groups",
+    join_by=opt$'group-by',
+    pool_samples=T,
+    downsample=downsample,
+    save_clustered=T,
+    save_collapsed=T)
 }
