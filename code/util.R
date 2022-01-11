@@ -167,9 +167,12 @@ clones2groups <- function(immdata = NULL, overwrite = F, savefasta = F, dirname=
         mutate(id=str_c(cur_group_id(), cloneclust(CDR3.aa, 0.15), sep=".")) %>%
         group_by(id, .add=T)
 
-  if (pool_samples) {
+  if (pool_samples & !is.null(join_by)) {
     all_d3 <- all_d2 %>% ungroup() %>% group_split(JoinBy, .keep=F)
     names(all_d3) <- levels(all_d$JoinBy)
+  } else if (pool_samples & is.null(join_by)) {
+    all_d3 = list()
+    all_d3[["pooled"]] <- all_d2 %>% select(-JoinBy)
   } else {
     all_d3 <- all_d2 %>% ungroup() %>% select(-JoinBy) %>% group_split(Sample, .keep=T)
     names(all_d3) <- names(immdata$data)
